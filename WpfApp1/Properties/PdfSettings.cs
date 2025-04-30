@@ -18,19 +18,19 @@ public class PdfSettings : SettingsConstants
         Header_Enabled = true;
         Header_LeftTextMode = TextMode.Dynamic;
         Header_LeftText = "L Header";
-        Header_LeftCount = 1000_00;
+        Header_LeftCount = 100_000;
         Header_RightTextMode = TextMode.Static;
         Header_RightText = "R Header";
-        Header_RightCount = 1000_00;
+        Header_RightCount = 100_000;
 
         // Footer
         Footer_Enabled = true;
         Footer_LeftTextMode = TextMode.Static;
         Footer_LeftText = "L Footer";
-        Footer_LeftCount = 1000_00;
+        Footer_LeftCount = 100_000;
         Footer_RightTextMode = TextMode.Dynamic;
         Footer_RightText = "R Footer";
-        Footer_RightCount = 1000_00;
+        Footer_RightCount = 100_000;
         
         Console.WriteLine("PdfSettings Reset()"); //todo
     }

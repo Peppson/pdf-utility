@@ -2,6 +2,11 @@
 using System.Drawing; // Requires System.Drawing.Common on .NET Core/5/6/7
 using PdfiumViewer;
 using Tesseract;
+using System;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Kernel.Pdf.Canvas;
 
 namespace dev;
 
@@ -10,7 +15,8 @@ internal class Program
     static void Main(string[] args)
     {
         Console.WriteLine();
-        DoIt();
+        //DoIt();
+        DoIt2();
     }
 
     static void DoIt()
@@ -25,7 +31,7 @@ internal class Program
         foreach (var fileName in fileNames)
         {
             string pdfPath = @"C:\Users\jw\Desktop\Samples\" + fileName;            
-            using var document = PdfDocument.Load(pdfPath);
+            using var document = PdfiumViewer.PdfDocument.Load(pdfPath);
             Console.WriteLine($"\nPdf: {fileName}:");
 
             for (int i = 0; i < document.PageCount; i++)
@@ -47,6 +53,52 @@ internal class Program
                 Console.WriteLine($"Page {i + 1} rot: {orientation}\t\t{confidence:0.##} confidence");
             }
         }
+    }
+
+    static void DoIt2()
+    {
+        // working !!!!!
+        try
+        {
+            string inputPdfPath = @"C:/Users/jw/Desktop/pdf app/Samples/TRASIG__Horizontel_page_2_270fel - Copy.pdf"; // Ensure you have an input PDF
+            string outputFolder = SetAndGetDesktopFolder(); // Make sure this folder exists
+            string finalOutputFilePath = Path.Combine(outputFolder, "TEST.pdf");
+
+
+            using var writer = new PdfWriter(finalOutputFilePath);
+            using var targetPdf = new iText.Kernel.Pdf.PdfDocument(writer);
+
+            using var theThing = new PdfReader(inputPdfPath);
+            using var pdfDoc = new iText.Kernel.Pdf.PdfDocument(theThing);
+            {
+                var page = pdfDoc.GetPage(1);
+                var pageCopy = page.CopyAsFormXObject(targetPdf);
+
+                Console.WriteLine("Page copying successful!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+    }
+
+    private static string SetAndGetDesktopFolder()
+    {
+        string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+        if (string.IsNullOrEmpty(desktopPath))
+            Console.WriteLine("Desktop path is null or empty.");
+
+        // Create folder
+        var outputFolder = Path.Combine(desktopPath, "kor");
+        if (!Directory.Exists(outputFolder))
+        {
+            Console.WriteLine("Creating folder: " + outputFolder);
+            Directory.CreateDirectory(outputFolder);
+        }
+
+        return outputFolder;
     }
 }
 

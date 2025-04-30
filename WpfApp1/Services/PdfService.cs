@@ -18,6 +18,8 @@ using Tesseract;
 using System.Windows.Automation.Peers;
 using System.Linq;
 using static iText.Layout.Font.FontProvider;
+using iText.Svg.Renderers.Impl;
+using iText.Kernel.Validation.Context;
 
 namespace WpfApp1.Services;
 
@@ -134,6 +136,8 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
             catch (Exception ex)
             {   
                 WinDialogService.ErrorProcessingPDF(ex);
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.StackTrace); // todo
                 ResetAll();
                 break;
             }
@@ -162,18 +166,24 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         using var reader = new PdfReader(stream);
         using var writer = new PdfWriter(outputFilePath);
         using var pdfDoc = new PdfDocument(reader, writer);
-        using var document = new Document(pdfDoc);
+
+        // Working but ugly todo
+        using var stream2 = new MemoryStream(pdf.RawBytes);
+        using var reader2 = new PdfReader(stream2);
+        using var pdfTEST = new PdfDocument(reader2);
+
+        //using var document = new Document(pdfDoc);
 
         // Add content?
         if (_settings.Header_Enabled || _settings.Footer_Enabled)
-            AddHeaderFooter(pdfDoc, pageRotations);
+            AddHeaderFooter(pdfDoc, pageRotations, pdfTEST);
         else
             RotatePages(pdfDoc, pageRotations);
 
         // Write to index file and save
         indexFileContent += $"{fileName}.pdf - {pdf.FileName}\n";
         _PDFCounter++;
-        document.Close();
+        //document.Close(); // todo
     }
 
     private static int[] GetPageRotations(Pdf pdf, TesseractEngine engine)
@@ -219,8 +229,8 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         return 0;
     }
 
-    private void AddHeaderFooter(PdfDocument pdf, int[] pageRotations)
-    {        
+    private void AddHeaderFooter(PdfDocument pdf, int[] pageRotations, PdfDocument pdfTEST)
+    {   
         for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
         {   
             var rotation = pageRotations[i - 1];
@@ -232,7 +242,8 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
             RotatePage(rotation, page);
 
             // Shrink page content to fit header/footer
-            ScaleOriginalContent(page, width, height);
+            ScaleOriginalContent(page, width, height, i, pdfTEST); // todo pagenumber
+            ScaleAnnotations(page, width, height);
 
             // Get new width and height after rotation
             var rotatedWidth = page.GetPageSizeWithRotation().GetWidth();
@@ -247,10 +258,31 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         }
     }
 
-    private void ScaleOriginalContent(PdfPage page, float width, float height)
+    private void ScaleOriginalContent(PdfPage page, float width, float height, int pageNumber = 999, PdfDocument? pdfTEST = null)
     {
         var scaleFactor = _settings.ScaleFactor;
-        var pageCopy = page.CopyAsFormXObject(page.GetDocument());
+        //var pageCopy = page.CopyAsFormXObject(page.GetDocument());
+
+
+
+        var pageTest = pdfTEST.GetPage(pageNumber);
+
+        PdfFormXObject? pageCopy = null;
+        try
+        {
+            //pageCopy = page.CopyAsFormXObject(page.GetDocument());
+
+            pageCopy = pageTest.CopyAsFormXObject(page.GetDocument());
+            
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"P: {pageNumber}   - Error {ex.Message} ");
+            Console.WriteLine(ex.StackTrace); // todo
+
+            return;
+        }
+
 
         // Create a new canvas for the page
         var canvas = new PdfCanvas(page);
@@ -272,6 +304,58 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         #endif
 
         canvas.RestoreState();
+    }
+
+    private void ScaleAnnotations(PdfPage page, float width, float height)
+    {
+        var annotations = page.GetAnnotations();
+        float offsetX = (width - width * _settings.ScaleFactor) / 2;
+        float offsetY = (height - height * _settings.ScaleFactor) / 2;
+
+        foreach (var annotation in annotations)
+        {   
+            var rect = annotation.GetRectangle().ToRectangle();
+
+            var scaledRect = new iText.Kernel.Geom.Rectangle(
+                rect.GetX() * _settings.ScaleFactor + offsetX,
+                rect.GetY() * _settings.ScaleFactor + offsetY,
+                rect.GetWidth() * _settings.ScaleFactor,
+                rect.GetHeight() * _settings.ScaleFactor
+            );
+
+            // Highlighted text
+            if (annotation.GetSubtype().Equals(PdfName.Highlight))
+            {
+                ScaleHighlightedText(page, scaledRect, annotation);
+            }
+            else // All other
+            {   
+                annotation.SetRectangle(new PdfArray(
+                [
+                    scaledRect.GetX(), 
+                    scaledRect.GetY(), 
+                    scaledRect.GetX() + scaledRect.GetWidth(), 
+                    scaledRect.GetY() + scaledRect.GetHeight() 
+                ]));
+            }
+        }
+    }
+
+    private static void ScaleHighlightedText(
+        PdfPage page, 
+        iText.Kernel.Geom.Rectangle scaledRect, 
+        iText.Kernel.Pdf.Annot.PdfAnnotation annotation)
+    {
+        var canvas = new PdfCanvas(page);
+
+        canvas.SaveState();
+        canvas.SetFillColor(ColorConstants.ORANGE);
+        canvas.SetExtGState(new iText.Kernel.Pdf.Extgstate.PdfExtGState().SetFillOpacity(0.25f));
+        canvas.Rectangle(scaledRect.GetX(), scaledRect.GetY(), scaledRect.GetWidth(), scaledRect.GetHeight());
+        canvas.Fill();
+        canvas.RestoreState();
+
+        page.RemoveAnnotation(annotation);
     }
 
     private void AddHeader(PdfCanvas canvas, float height, float width)
@@ -435,7 +519,7 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
     private string GetOutputPath()
     {
         string desktopPath = SetAndGetDesktopFolder();
-        string subFolderName = DateTime.Now.ToString("yyyy-MM-dd");
+        string subFolderName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
         string subFolderPath = Path.Combine(desktopPath, subFolderName);
 
         if (!Directory.Exists(subFolderPath))
@@ -444,7 +528,7 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
             return subFolderPath + "/";
         }
 
-        // Add "_{i}" to folder if already present
+        // Add "_{i}" to folder if already present, unlikely
         int counter = 1;
         string outputPath = $"{subFolderPath}_{counter}";
         
@@ -469,6 +553,7 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         var outputFolder = Path.Combine(desktopPath, _settings.outputFolderName);
         if (!Directory.Exists(outputFolder))
         {
+            Console.WriteLine("Creating folder: " + outputFolder);
             Directory.CreateDirectory(outputFolder);
         }
 
@@ -480,7 +565,7 @@ public class PdfService(WinDialogService winDialogService, PdfSettings settings,
         string filePath = outputPath + "Index.txt";
         using var indexFile = new StreamWriter(filePath, append: true);
 
-        indexFile.WriteLine("---- Index of processed PDF Files ----\n");
+        indexFile.WriteLine("---- Index of processed files ----\n");
         indexFile.WriteLine(content);
     }
 

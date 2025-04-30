@@ -5,9 +5,11 @@
 1000 2000 3000 per pdf num ej pages
 Behåll annotations
 
-några pdf still fucked 
+några pdf still fucked
 ej ouput ifall fel
 preview? i app? rotera ifall någon fel?
+Paralell per pdf
 
-UI
+UI - Tungis
+
 unhandled global exeption >> vissa någon tråkigt fönster??
