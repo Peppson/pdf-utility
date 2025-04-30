@@ -1,0 +1,13 @@
+
+---- MacroHard PDFiddler ----
+
+
+1000 2000 3000 per pdf num ej pages
+Behåll annotations
+
+några pdf still fucked 
+ej ouput ifall fel
+preview? i app? rotera ifall någon fel?
+
+UI
+unhandled global exeption >> vissa någon tråkigt fönster??

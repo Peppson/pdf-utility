@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType> <!-- WinExe -->
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<NoWarn>$(NoWarn);NU1701;CS8618</NoWarn>
+	</PropertyGroup>
+
+	<!--    #define debug symbols	-->
+	<PropertyGroup>
+		<DefineConstants>    HEADER_FOOTER_COLOR;    <!-- CONTENT_COLOR; -->    </DefineConstants>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="itext7" Version="9.1.0" />
+		<PackageReference Include="itext7.bouncy-castle-adapter" Version="9.1.0" />
+		<PackageReference Include="PdfiumViewer" Version="2.13.0" />
+		<PackageReference Include="PdfiumViewer.Native.x86_64.v8-xfa" Version="2018.4.8.256" />
+		<PackageReference Include="System.Drawing.Common" Version="9.0.4" />
+		<PackageReference Include="Tesseract" Version="5.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
+</Project>
