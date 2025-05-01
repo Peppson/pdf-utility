@@ -1,9 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
-using WpfApp1.Models;
 using WpfApp1.Services;
 
 namespace WpfApp1.Views;
@@ -20,10 +18,9 @@ public partial class MainWindow : Window
     }
 
 
-    private void DoTheThing_Click(object sender, RoutedEventArgs e)
+    private void ProcessAllPdfs_Click(object sender, RoutedEventArgs e)
     {
-        _PdfService.DoTheThing();
-        _PdfService.RemoveAllPdfs();
+        _PdfService.ProcessAllPdfs();
         e.Handled = true;
     }
 
@@ -31,7 +28,7 @@ public partial class MainWindow : Window
     private void SelectPdf_Click(object sender, RoutedEventArgs e)
     {
         _PdfService.SelectPdf();
-        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}"; // todo
+        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}";
         e.Handled = true;
     }
 
@@ -77,7 +74,7 @@ public partial class MainWindow : Window
     {
         TEST1.Fill = new SolidColorBrush(Colors.FloralWhite);
         _PdfService.DragAndDropPdf(e);
-        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}"; // todo
+        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}";
         e.Handled = true;
     }
 
@@ -101,7 +98,7 @@ public partial class MainWindow : Window
     private void RemoveAllPdf_Click(object sender, RoutedEventArgs e)
     {
         _PdfService.RemoveAllPdfs();
-        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}"; // todo
+        FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}";
         e.Handled = true;
     }
 
@@ -112,8 +109,8 @@ public partial class MainWindow : Window
         if (!string.IsNullOrEmpty(path) && File.Exists(path))
             Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
         else
-            MessageBox.Show("Log file not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            DialogService.Error("Log file not found.");
             
         e.Handled = true;
-    }     
+    }    
 }

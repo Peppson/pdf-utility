@@ -1,13 +1,19 @@
 
 ---- MacroHard PDFiddler ----
 
-pdf writer/reader
-ej output ifall fel
-Paralell per pdf
 fonts
 1000 2000 3000 per pdf num ej pages
-preview? i app? rotera ifall någon fel?
 
-async ui?
-UI - Tungis
+UI:
+preview? i app? rotera ifall någon fel? (confidence level)
+progressbar
+inställningar header/footer
+theme
+async
+
+Make:
 Bygg i -c Release
+
+Improvements:
+Multithread tesseract calls
+async UI

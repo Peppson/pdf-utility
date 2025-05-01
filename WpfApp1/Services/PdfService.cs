@@ -1,26 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
+﻿using System.IO;
 using System.Windows;
-using System.Drawing.Imaging;
 using iText.Kernel.Colors;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
 using iText.Layout.Borders;
 using iText.Layout.Element;
-using iText.Layout.Properties;
-using WpfApp1.Helpers;
-using WpfApp1.Models;
-using WpfApp1.Config;
-using Tesseract;
-using System.Windows.Automation.Peers;
-using System.Linq;
-using static iText.Layout.Font.FontProvider;
-using iText.Svg.Renderers.Impl;
-using iText.Kernel.Validation.Context;
 using Serilog;
+using Tesseract;
+using WpfApp1.Config;
+using WpfApp1.Models;
 
 namespace WpfApp1.Services;
 
@@ -30,10 +19,9 @@ public interface IPdfService
     bool DragAndDropPdf(DragEventArgs e);
     static List<Pdf> LoadedPdfs { get; }
     int FileCount => LoadedPdfs.Count;
+    void ProcessAllPdfs();
     bool RemoveAllPdfs();    
-    void DoTheThing();
     void ResetAll();
-    //public bool IsAllValidPdfExtension(string[] files);
 }
 
 public class PdfService(FontService fontService, UserConfig userConfig) : IPdfService
@@ -103,22 +91,14 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         }
     }
 
-    
-
-
-    
-    
-
-
-    
-
-    public void DoTheThing()
+    public void ProcessAllPdfs()
     {
         if (IsProcessingDisabled()) return;
 
         using var engine = new TesseractEngine(@"./tessdata", "eng", EngineMode.Default);
         var outputPath = FileOutputService.GetOutputPath();
         var indexFileContent = "";
+        var hasFailed = false;
         _PDFCounter = 0;
 
         foreach (var pdf in LoadedPdfs)
@@ -129,19 +109,22 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
             }
             catch (Exception ex)
             {   
-                DialogService.ErrorProcessingPDF(ex);
-                ClearPdfData();
                 Log.Warning("Error processing PDF: " + ex.Message);
-                return;
+                DialogService.ErrorProcessingPDF(ex);
+                hasFailed = true;
             }
         }
 
-        // todo confidence levels?
-        // todo chunk save all pdfs?
+        // Cleanup if failed
+        if (hasFailed)
+        {
+            DeleteFailedOutput(outputPath);
+            return;
+        }
 
-        FileOutputService.OutputIndexFile(indexFileContent, outputPath);
         ClearPdfData();
-        Log.Debug("Done!");
+        FileOutputService.OutputIndexFile(indexFileContent, outputPath);
+        Log.Debug("Success!");
     }
 
     private void ProcessPdf(Pdf pdf, TesseractEngine engine, string outputPath, ref string indexFileContent)
@@ -152,22 +135,22 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         // Tesseract image engine for detecting page rotations
         var pageRotations = GetPageRotations(pdf, engine);
 
-        // Input PDF
+        // Output PDF
         using var stream = new MemoryStream(pdf.RawBytes);
         using var reader = new PdfReader(stream);
         using var writer = new PdfWriter(outputFilePath);
-        using var pdfDoc = new PdfDocument(reader, writer);
+        using var outputPdf = new PdfDocument(reader, writer);
 
-        // Output PDF
+        // PDF used for coping XObject content
         using var stream2 = new MemoryStream(pdf.RawBytes);
         using var reader2 = new PdfReader(stream2);
-        using var pdfTEST = new PdfDocument(reader2);
+        using var inputPdf = new PdfDocument(reader2);
 
         // What are we doing?
         if (_userConfig.OnlyRotatePages)
-            RotateAllPages(pdfDoc, pageRotations);
+            RotateAllPages(outputPdf, pageRotations);
         else if (_userConfig.Header_Enabled || _userConfig.Footer_Enabled)
-            AddHeaderFooter(pdfDoc, pageRotations, pdfTEST);
+            AddHeaderFooter(outputPdf, inputPdf, pageRotations);
 
         indexFileContent += $"{outputFileName}.pdf - {pdf.FileName}\n";
         _PDFCounter++;
@@ -218,12 +201,13 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         return pageRotations;
     }
 
-    private void AddHeaderFooter(PdfDocument pdf, int[] pageRotations, PdfDocument pdfTEST)
+    private void AddHeaderFooter(PdfDocument outputPdf, PdfDocument inputPdf, int[] pageRotations)
     {   
-        for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+        for (int i = 1; i <= outputPdf.GetNumberOfPages(); i++)
         {   
             var rotation = pageRotations[i - 1];
-            var page = pdf.GetPage(i);
+            var page = outputPdf.GetPage(i);
+            var inputPage = inputPdf.GetPage(i);
             var width = page.GetPageSize().GetWidth();
             var height = page.GetPageSize().GetHeight();
 
@@ -231,7 +215,7 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
             RotatePage(rotation, page);
 
             // Shrink page content to fit header/footer
-            ScaleOriginalContent(page, width, height, i, pdfTEST); // todo pagenumber reader/writer
+            ScaleOriginalContent(page, inputPage, width, height);
             ScaleAnnotations(page, width, height);
 
             // Get new width and height after rotation
@@ -247,31 +231,10 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         }
     }
 
-    private void ScaleOriginalContent(PdfPage page, float width, float height, int pageNumber = 999, PdfDocument? pdfTEST = null)
+    private static void ScaleOriginalContent(PdfPage page, PdfPage inputpage, float width, float height)
     {
         var scaleFactor = AppConstants.ScaleFactor;
-        //var pageCopy = page.CopyAsFormXObject(page.GetDocument());
-
-
-
-        var pageTest = pdfTEST!.GetPage(pageNumber);
-
-        PdfFormXObject? pageCopy = null;
-        try
-        {
-            //pageCopy = page.CopyAsFormXObject(page.GetDocument());
-
-            pageCopy = pageTest.CopyAsFormXObject(page.GetDocument());
-            
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"P: {pageNumber}   - Error {ex.Message} ");
-            Console.WriteLine(ex.StackTrace); // todo
-
-            return;
-        }
-
+        var pageCopy = inputpage.CopyAsFormXObject(page.GetDocument());
 
         // Create a new canvas for the page
         var canvas = new PdfCanvas(page);
@@ -315,7 +278,7 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
             // Highlighted text
             if (annotation.GetSubtype().Equals(PdfName.Highlight))
             {
-                ScaleHighlightedText(page, scaledRect, annotation);
+                WriteNewHighlightedText(page, scaledRect, annotation);
             }
             else // Others
             {   
@@ -330,7 +293,7 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         }
     }
 
-    private static void ScaleHighlightedText(
+    private static void WriteNewHighlightedText(
         PdfPage page, 
         iText.Kernel.Geom.Rectangle scaledRect, 
         iText.Kernel.Pdf.Annot.PdfAnnotation annotation)
@@ -451,14 +414,14 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         }
     }
 
-    private static void RotateAllPages(PdfDocument pdf, int[] pageRotations)
+    private static void RotateAllPages(PdfDocument outputPdf, int[] pageRotations)
     {        
-        Log.Debug($"Rotating {pdf.GetNumberOfPages()} pages...");
+        Log.Debug($"Rotating {outputPdf.GetNumberOfPages()} pages...");
 
-        for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+        for (int i = 1; i <= outputPdf.GetNumberOfPages(); i++)
         {    
             var rotation = pageRotations[i - 1];
-            var page = pdf.GetPage(i);
+            var page = outputPdf.GetPage(i);
 
             if (rotation != 0)
             {
@@ -506,6 +469,21 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
             .SetPaddingRight(10);
     }
 
+    private static void DeleteFailedOutput(string outputPath)
+    {   
+        ClearPdfData();
+
+        if (Directory.Exists(outputPath))
+        {
+            Directory.Delete(outputPath, true);
+            Log.Warning($"Deleting folder: {outputPath}");
+        }
+        else
+        {
+            Log.Debug($"Folder not found: {outputPath}");
+        }
+    }
+
     public static bool IsAllValidPdfExtension(string[] files)
     {
         if (files.Length == 0) return false;
@@ -516,14 +494,27 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
     }
 
     private bool IsProcessingDisabled()
-    {
+    {   
+        bool isDisabled;
         if (!_userConfig.OnlyRotatePages && !_userConfig.Header_Enabled && !_userConfig.Footer_Enabled)
         {
             Log.Debug("No header/footer or rotation enabled, skipping...");
-            return true;
+            isDisabled = true;
         }
-        return false;
+        else
+        {
+            isDisabled = false;
+        }
+
+        _userConfig.ProcessingDisabled = isDisabled;
+        return isDisabled;
     }
+
+    private static void ClearPdfData()
+    {
+        LoadedPdfs.Clear();
+        LowConfidencePages.Clear();
+    }  
 
     public bool RemoveAllPdfs()
     {
@@ -532,12 +523,6 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         ClearPdfData();
         return true;
     }
-
-    private static void ClearPdfData()
-    {
-        LoadedPdfs.Clear();
-        LowConfidencePages.Clear();
-    }    
 
     public void ResetAll()
     {

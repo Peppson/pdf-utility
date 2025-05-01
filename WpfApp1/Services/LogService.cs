@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -35,7 +34,7 @@ public static class LogService
             .WriteTo.File(LogFilePath, 
                 rollingInterval: RollingInterval.Infinite, 
                 retainedFileCountLimit: 1,
-                fileSizeLimitBytes: 5_000_000, // 5MB
+                fileSizeLimitBytes: 10_000_000, // 10MB
                 rollOnFileSizeLimit: true)
             .CreateLogger();
     }
@@ -54,7 +53,7 @@ public static class LogService
             .WriteTo.File(LogFilePath, 
                 rollingInterval: RollingInterval.Infinite, 
                 retainedFileCountLimit: 1,
-                fileSizeLimitBytes: 5_000_000,
+                fileSizeLimitBytes: 1_000_000,
                 rollOnFileSizeLimit: true)
             .CreateLogger();
     }

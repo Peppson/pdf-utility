@@ -60,8 +60,8 @@
                 FontWeight="Bold"
                 Width="100" Height="60" Margin="379,333,321,41"/>
 
-        <Button Content="Do the Thing" 
-                Click="DoTheThing_Click" 
+        <Button Content="Do all" 
+                Click="ProcessAllPdfs_Click" 
                 Background="BurlyWood" 
                 Foreground="White"  
                 FontWeight="Bold"
@@ -73,6 +73,20 @@
                 Foreground="White"  
                 FontWeight="Bold"
                 Width="100" Height="60" Margin="506,333,194,41"/>
+
+        <StackPanel Margin="20">
+                <ProgressBar x:Name="ProgressBar"
+                                Height="20"
+                                Minimum="0"
+                                Maximum="100"
+                                Value="0"
+                                Margin="0,0,0,10" />
+
+                <Label x:Name="StatusLabel"
+                        Content=""
+                        FontSize="14" />
+        </StackPanel>
+
 
 
     </Grid>

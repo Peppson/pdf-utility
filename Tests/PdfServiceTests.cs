@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using WpfApp1.Config;
 using WpfApp1.Services;
 
 namespace Tests;
@@ -22,11 +23,13 @@ public class PdfServiceTests
     [Fact]
     public void CheckAndConfirmFileOverwrite_FileDoesNotExist_ReturnsTrue()
     {
-        var instance = new PdfService(new DialogService());
+        var userConfig = new UserConfig();
+        var fontService = new FontService();
+        var instance = new PdfService(fontService, userConfig);
 
         string nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".pdf");
 
-        MethodInfo methodInfo = typeof(PdfService).GetMethod("CheckAndConfirmFileOverwrite", BindingFlags.NonPublic | BindingFlags.Instance);
+        MethodInfo methodInfo = typeof(PdfService).GetMethod("CheckAndConfirmFileOverwrite", BindingFlags.NonPublic | BindingFlags.Instance)!;
         Assert.NotNull(methodInfo);
 
         bool result = (bool)methodInfo.Invoke(instance, [nonExistentPath])!;

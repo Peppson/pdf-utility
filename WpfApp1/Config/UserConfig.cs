@@ -12,6 +12,7 @@ public class UserConfig
         Font = "TIMES-ROMAN";
         FontSize = 14;
         OnlyRotatePages = false;
+        ProcessingDisabled = false;
 
         // Header
         Header_Enabled = true;
@@ -37,6 +38,7 @@ public class UserConfig
     public string Font { get; set; }
     public int FontSize { get; set; }
     public bool OnlyRotatePages { get; set; }
+    public bool ProcessingDisabled { get; set; }
 
     // Header
     public bool Header_Enabled { get; set; }

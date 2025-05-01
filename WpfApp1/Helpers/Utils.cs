@@ -22,7 +22,7 @@ public static class U
                 continue;
             }
 
-            // Hack for reading float/double/decimals correctly
+            // Reading float/double/decimals correctly
             if (typeof(T) == typeof(float) || typeof(T) == typeof(double) || typeof(T) == typeof(decimal))
             {
                 input = input.Replace('.', ',');

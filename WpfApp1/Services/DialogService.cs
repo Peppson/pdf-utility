@@ -81,25 +81,38 @@ public static class DialogService
         return answer == MessageBoxResult.Yes;
     }
 
-    public static bool PromptLicenseAgremeent()
+    public static bool PromptLicenseAgreement()
     {   
         if (!Properties.Settings.Default.IsFirstStartup) return true;
 
         var answer = MessageBox.Show(
-            $"USE AT OWN RISK! \nJESPER KAN INTE BLI SKYLDIG TILL NÅGOT\n bla bla MIT-LICENSE", // TODO
+            "By using this software, you agree to do so entirely at your own risk.\n\n" +
+            "The software is provided 'as is', without any warranties, under the terms of the MIT License.\n\n\n" +
+            "By clicking OK, you acknowledge and accept these terms.\n\n",
             "Terms of Use",
             MessageBoxButton.OKCancel,
-            MessageBoxImage.Question
+            MessageBoxImage.Warning
         );
 
         if (answer == MessageBoxResult.OK)
         {
             Properties.Settings.Default.IsFirstStartup = false;
             Properties.Settings.Default.Save();
+            Log.Warning("License agreement accepted.");
             return true;
         }
 
         return false;
+    }
+
+    public static void Error(string message)
+    {
+        MessageBox.Show(
+            message,
+            "Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error
+        );
     }
 
     public static void ErrorProcessingPDF(Exception ex)
@@ -120,7 +133,7 @@ public static class DialogService
             MessageBoxButton.OK,
             MessageBoxImage.Error
         );
-        Log.Error($"Error getting desktop: {ex.Message}");
+        Log.Fatal($"Error getting desktop: {ex.Message}");
     }
 
     public static bool CheckAndConfirmFileOverwrite(string outputPdf)

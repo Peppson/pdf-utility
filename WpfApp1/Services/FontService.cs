@@ -1,5 +1,5 @@
-using iText.Layout.Font;
 using iText.IO.Font.Constants;
+using iText.Layout.Font;
 using Serilog;
 
 namespace WpfApp1.Services;
@@ -8,6 +8,23 @@ public class FontService
 {
     private readonly FontProvider _fontProvider;
 
+
+    /*
+        Courier
+        Courier-Bold
+        Courier-BoldOblique
+        Courier-Oblique
+        Helvetica
+        Helvetica-Bold
+        Helvetica-BoldOblique
+        Helvetica-Oblique
+        Symbol
+        Times-Roman
+        Times-Bold
+        Times-BoldItalic
+        Times-Italic
+        ZapfDingbats
+    */
 
     public FontService()
     {
