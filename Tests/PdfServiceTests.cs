@@ -22,7 +22,7 @@ public class PdfServiceTests
     [Fact]
     public void CheckAndConfirmFileOverwrite_FileDoesNotExist_ReturnsTrue()
     {
-        var instance = new PdfService(new WinDialogService());
+        var instance = new PdfService(new DialogService());
 
         string nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".pdf");
 

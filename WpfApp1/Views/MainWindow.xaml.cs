@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -22,7 +23,7 @@ public partial class MainWindow : Window
     private void DoTheThing_Click(object sender, RoutedEventArgs e)
     {
         _PdfService.DoTheThing();
-        _PdfService.RemoveAllPdf();
+        _PdfService.RemoveAllPdfs();
         e.Handled = true;
     }
 
@@ -99,33 +100,20 @@ public partial class MainWindow : Window
 
     private void RemoveAllPdf_Click(object sender, RoutedEventArgs e)
     {
-        _PdfService.RemoveAllPdf();
+        _PdfService.RemoveAllPdfs();
         FileCountTextBlock.Text = $"Files: {_PdfService.FileCount}"; // todo
         e.Handled = true;
     }
 
-    
+    private void OpenLogFile_Click(object sender, RoutedEventArgs e)
+    {
+        var path = LogService.LogFilePath;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
+        if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        else
+            MessageBox.Show("Log file not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            
+        e.Handled = true;
+    }     
 }
-
-
-

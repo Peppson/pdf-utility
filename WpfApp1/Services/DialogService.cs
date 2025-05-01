@@ -1,23 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
+using Serilog;
 
 namespace WpfApp1.Services;
 
-public interface IWinDialogService
-{
-    bool CheckAndConfirmFileOverwrite(string outputPdf);
-    bool OpenSelectPdfWindow(out OpenFileDialog openFileDialog);
-}
-
-public class WinDialogService //: IWinDialogService
+public static class DialogService
 {   
-    public static bool GetFilePathsFromExplorerWindow(out string[] paths)
+    public static bool GetFilePathsExplorerWindow(out string[] paths)
     {
         paths = [];
 
@@ -25,7 +16,7 @@ public class WinDialogService //: IWinDialogService
         {
             Filter = "PDF files (*.pdf)|*.pdf",
             Title = "Select one or more PDF files",
-            Multiselect = true
+            Multiselect = true,
         };
 
         if (openFileDialog.ShowDialog() != true)
@@ -41,7 +32,7 @@ public class WinDialogService //: IWinDialogService
         return true;
     }
 
-    public static bool GetFilePathsFromDragAndDrop(DragEventArgs e, out string[] paths)
+    public static bool GetFilePathsDragAndDrop(DragEventArgs e, out string[] paths)
     {
         paths = [];
 
@@ -90,26 +81,6 @@ public class WinDialogService //: IWinDialogService
         return answer == MessageBoxResult.Yes;
     }
 
-    public static void ErrorProcessingPDF(Exception ex)
-    {
-        MessageBox.Show(
-            $"Error processing PDF: {ex.Message}",
-            "Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error
-        );
-    }
-
-    public static void ErrorGettingDesktop(Exception ex) // Can this ever happen?
-    {
-        MessageBox.Show(
-            $"Error getting desktop: {ex.Message}",
-            "Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error
-        );
-    }
-
     public static bool PromptLicenseAgremeent()
     {   
         if (!Properties.Settings.Default.IsFirstStartup) return true;
@@ -129,6 +100,27 @@ public class WinDialogService //: IWinDialogService
         }
 
         return false;
+    }
+
+    public static void ErrorProcessingPDF(Exception ex)
+    {
+        MessageBox.Show(
+            $"Error processing PDF: {ex.Message}",
+            "Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error
+        );
+    }
+
+    public static void ErrorGettingDesktop(Exception ex) // Can this ever happen?
+    {
+        MessageBox.Show(
+            $"Error getting desktop: {ex.Message}",
+            "Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error
+        );
+        Log.Error($"Error getting desktop: {ex.Message}");
     }
 
     public static bool CheckAndConfirmFileOverwrite(string outputPdf)
@@ -153,5 +145,3 @@ public class WinDialogService //: IWinDialogService
         return true;
     }
 }
-
-

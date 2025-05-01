@@ -1,6 +1,8 @@
 ﻿using System.Drawing;
 using System.IO;
 using System.Windows;
+using Serilog;
+using WpfApp1.Config;
 using WpfApp1.Models;
 using WpfApp1.Services;
 using WpfApp1.Views;
@@ -13,11 +15,28 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        var settings = new PdfSettings();
+        // Services
+        var userConfig = new UserConfig();
         var fontService = new FontService();
-        var windowService = new WinDialogService();
-        var pdfService = new PdfService(windowService, settings, fontService);
+        var pdfService = new PdfService(fontService, userConfig);
 
+        // Logger
+        #if DEBUG
+            LogService.Init(isRelease: false);
+        #else
+            LogService.Init(isRelease: true);
+        #endif
+        Log.Information("-- Application started --");
+
+
+
+        /*
+        Log.Debug("This is a debug message");
+        Log.Information("Application started");
+        Log.Warning("Disk space is running low");
+        Log.Error("Failed to save the file");
+        Log.Fatal("Unhandled exception - shutting down");
+        */
 
         /*
         Courier
@@ -43,14 +62,15 @@ public partial class App : Application
         WpfApp1.Properties.Settings.Default.Save(); */
 
         // Show "License Agreement" window on first startup
-        if (!WinDialogService.PromptLicenseAgremeent())
+        if (!DialogService.PromptLicenseAgremeent())
         {
             Current.Shutdown(); // ¯\_(ツ)_/¯
         }
     } 
 
     protected override void OnExit(ExitEventArgs e)
-    {
+    {   
+        LogService.Shutdown();
         base.OnExit(e);
     }
 }

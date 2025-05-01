@@ -1,12 +1,13 @@
-using System.Drawing;
 using iText.Layout.Font;
 using iText.IO.Font.Constants;
+using Serilog;
 
 namespace WpfApp1.Services;
 
 public class FontService
 {
     private readonly FontProvider _fontProvider;
+
 
     public FontService()
     {
@@ -18,7 +19,7 @@ public class FontService
     {
         foreach (var font in _fontProvider.GetFontSet().GetFonts())
         {
-            Console.WriteLine(font.GetFontName());
+            Log.Debug(font.GetFontName());
         }
     }
 
@@ -35,7 +36,7 @@ public class FontService
 
             // Fallback
             default:
-                Console.WriteLine("Fallback");
+                Log.Warning("Using fallback font: HELVETICA");
                 return iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
         }
     }

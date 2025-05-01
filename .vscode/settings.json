@@ -4,6 +4,9 @@
     "**/obj": true,
     "**/.vs": true
   },
+  "search.exclude": {
+    "**/dev/**": true
+  },
   
   "workspaceKeybindings.dotnetRun.enabled": true
 }

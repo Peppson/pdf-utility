@@ -26,7 +26,6 @@ public static class U
             if (typeof(T) == typeof(float) || typeof(T) == typeof(double) || typeof(T) == typeof(decimal))
             {
                 input = input.Replace('.', ',');
-                Console.WriteLine("YEP");
             }
 
             try

@@ -1,12 +1,11 @@
-using System.Windows;
-using iText.Kernel.Font;
-using WpfApp1.Properties;
+using Serilog;
+using WpfApp1.Models;
 
-namespace WpfApp1.Models;
+namespace WpfApp1.Config;
 
-public class PdfSettings : SettingsConstants
+public class UserConfig
 {
-    public PdfSettings() => Reset();
+    public UserConfig() => Reset();
 
     public void Reset()
     {
@@ -32,7 +31,7 @@ public class PdfSettings : SettingsConstants
         Footer_RightText = "R Footer";
         Footer_RightCount = 100_000;
         
-        Console.WriteLine("PdfSettings Reset()"); //todo
+        Log.Debug("UserConfig Reset()");
     }
 
     public string Font { get; set; }

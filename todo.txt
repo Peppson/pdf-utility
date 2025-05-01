@@ -1,15 +1,13 @@
 
 ---- MacroHard PDFiddler ----
 
-
-1000 2000 3000 per pdf num ej pages
-Behåll annotations
-
-några pdf still fucked
-ej ouput ifall fel
-preview? i app? rotera ifall någon fel?
+pdf writer/reader
+ej output ifall fel
 Paralell per pdf
+fonts
+1000 2000 3000 per pdf num ej pages
+preview? i app? rotera ifall någon fel?
 
+async ui?
 UI - Tungis
-
-unhandled global exeption >> vissa någon tråkigt fönster??
+Bygg i -c Release
