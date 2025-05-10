@@ -1,8 +1,11 @@
 
 ---- MacroHard PDFiddler ----
 
-fonts
+nisse font?
 1000 2000 3000 per pdf num ej pages
+
+WPF:
+https://www.youtube.com/watch?v=Vjldip84CXQ
 
 UI:
 preview? i app? rotera ifall någon fel? (confidence level)

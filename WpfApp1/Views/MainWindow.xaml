@@ -67,27 +67,33 @@
                 FontWeight="Bold"
                 Width="100" Height="60" Margin="163,173,537,201"/>
         
-        <Button Content="Reset" 
+        <Button Content="Reset"
                 Click="ResetAll_Click" 
                 Background="#0078D7" 
                 Foreground="White"  
                 FontWeight="Bold"
                 Width="100" Height="60" Margin="506,333,194,41"/>
 
-        <StackPanel Margin="20">
-                <ProgressBar x:Name="ProgressBar"
-                                Height="20"
-                                Minimum="0"
-                                Maximum="100"
-                                Value="0"
-                                Margin="0,0,0,10" />
-
-                <Label x:Name="StatusLabel"
-                        Content=""
-                        FontSize="14" />
-        </StackPanel>
 
 
+        <ComboBox x:Name="FontDropdown"
+                Width="200" 
+                Height="40" 
+                VerticalAlignment="Top" 
+                Margin="20" 
+                ItemsSource="{Binding AvailableFonts}"
+                SelectedItem="{Binding SelectedFont, Mode=TwoWay}"/>
 
+        <CheckBox x:Name="BoldCheckbox"
+              Content="Bold"
+              Margin="160,50,0,0"
+              VerticalAlignment="top"
+              IsChecked="{Binding IsBold, Mode=TwoWay}"/>
+              
+        <CheckBox x:Name="ItalicCheckbox"
+                Content="Italic"
+                Margin="160,10,0,0"
+                VerticalAlignment="top"
+                IsChecked="{Binding IsItalic, Mode=TwoWay}"/>
     </Grid>
 </Window>

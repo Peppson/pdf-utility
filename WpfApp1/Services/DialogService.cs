@@ -105,6 +105,16 @@ public static class DialogService
         return false;
     }
 
+    public static void Warning(string message)
+    {
+        MessageBox.Show(
+            message,
+            "Warning",
+            MessageBoxButton.OK,
+            MessageBoxImage.Warning
+        );
+    }
+
     public static void Error(string message)
     {
         MessageBox.Show(

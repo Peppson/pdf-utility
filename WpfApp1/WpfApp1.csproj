@@ -14,7 +14,7 @@
 		<DefineConstants>    HEADER_FOOTER_COLOR;    <!-- CONTENT_COLOR; -->    </DefineConstants>
 	</PropertyGroup>
 
-
+	
 	<ItemGroup>
 		<PackageReference Include="Tesseract" Version="5.2.0" />
 		<PackageReference Include="itext7" Version="9.1.0" />

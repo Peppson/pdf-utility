@@ -9,12 +9,16 @@ namespace WpfApp1.Views;
 public partial class MainWindow : Window
 {
     private readonly IPdfService _PdfService;
+    private readonly IFontService _fontService;
 
 
-    public MainWindow(IPdfService pdfService)
+    public MainWindow(IPdfService pdfService, IFontService fontService)
     {
         InitializeComponent();
         _PdfService = pdfService;
+        _fontService = fontService;
+        
+        DataContext = fontService;
     }
 
 

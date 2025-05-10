@@ -1,35 +1,98 @@
+using System.ComponentModel;
 using iText.IO.Font.Constants;
 using iText.Layout.Font;
 using Serilog;
+using WpfApp1.Config;
 
 namespace WpfApp1.Services;
 
-public class FontService
+public interface IFontService
+{   
+    iText.Kernel.Font.PdfFont GetSelectedFont();
+    void PrintAvailableFonts();
+    FontProvider GetFontProvider();
+}
+
+public class FontService : IFontService, INotifyPropertyChanged
 {
     private readonly FontProvider _fontProvider;
+    private readonly UserConfig _userConfig;
+    public event PropertyChangedEventHandler? PropertyChanged;
+    public FontProvider GetFontProvider() => _fontProvider;
 
+    public static List<string> AvailableFonts { get; set; } =
+    [
+        "Helvetica",
+        "Courier",
+        "Times-Roman",
+    ];
 
-    /*
-        Courier
-        Courier-Bold
-        Courier-BoldOblique
-        Courier-Oblique
-        Helvetica
-        Helvetica-Bold
-        Helvetica-BoldOblique
-        Helvetica-Oblique
-        Symbol
-        Times-Roman
-        Times-Bold
-        Times-BoldItalic
-        Times-Italic
-        ZapfDingbats
-    */
+    private static readonly List<string> _fontNames =
+    [
+        "Courier",
+        "Courier-Bold",
+        "Courier-BoldOblique",
+        "Courier-Oblique",
+        "Helvetica",
+        "Helvetica-Bold",
+        "Helvetica-BoldOblique",
+        "Helvetica-Oblique",
+        "Times-Roman",
+        "Times-Bold",
+        "Times-BoldItalic",
+        "Times-Italic"
+    ];
 
-    public FontService()
+    public bool IsBold
     {
+        get => _userConfig.IsBoldFont;
+        set
+        {
+            if (_userConfig.IsBoldFont != value)
+            {
+                _userConfig.IsBoldFont = value;
+                OnPropertyChanged(nameof(IsBold));
+            }
+        }
+    }
+
+    public bool IsItalic
+    {
+        get => _userConfig.IsItalicFont;
+        set
+        {
+            if (_userConfig.IsItalicFont != value)
+            {
+                _userConfig.IsItalicFont = value;
+                OnPropertyChanged(nameof(IsItalic));
+            }
+        }
+    }
+
+    public string SelectedFont
+    {
+        get => _userConfig.SelectedFont;
+        set
+        {
+            if (_userConfig.SelectedFont != value)
+            {
+                _userConfig.SelectedFont = value;
+                OnPropertyChanged(nameof(SelectedFont));
+            }
+        }
+    }
+
+    public FontService(UserConfig userConfig)
+    {
+        _userConfig = userConfig;
         _fontProvider = new FontProvider();
-        _fontProvider.AddStandardPdfFonts();
+        _fontProvider.AddStandardPdfFonts(); 
+        // Todo add nisse font
+    }
+    
+    protected void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
     public void PrintAvailableFonts()
@@ -40,23 +103,48 @@ public class FontService
         }
     }
 
-    public iText.Kernel.Font.PdfFont GetFont(string fontName)
-    {
-        switch (fontName)
-        {
-            case "TIMES-ROMAN":
-                return iText.Kernel.Font.PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
-            case "HELVETICA":
-                return iText.Kernel.Font.PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
-            case "COURIER":
-                return iText.Kernel.Font.PdfFontFactory.CreateFont(StandardFonts.COURIER);
+    public iText.Kernel.Font.PdfFont GetSelectedFont()
+    {   
+        var fontName = GetFontNameWithStyle(); // Font, Italic, Bold, etc.
 
-            // Fallback
-            default:
-                Log.Warning("Using fallback font: HELVETICA");
-                return iText.Kernel.Font.PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+        if (!_fontNames.Contains(fontName))
+        {   
+            string message = $"Unknown font \"{fontName}\", falling back to Helvetica.";
+            DialogService.Warning(message);
+            Log.Warning(message);
+            fontName = StandardFonts.HELVETICA;
         }
+
+        return iText.Kernel.Font.PdfFontFactory.CreateFont(fontName);
     }
 
-    public FontProvider GetFontProvider() => _fontProvider;
+    private string GetFontNameWithStyle()
+    {      
+        var baseFont = _userConfig.SelectedFont;
+
+        if (baseFont == "Times-Roman")
+            return GetTimesRomanFontName(); // Special case
+
+        if (_userConfig.IsBoldFont && _userConfig.IsItalicFont)
+            return $"{baseFont}-BoldOblique";
+        else if (_userConfig.IsBoldFont)
+            return $"{baseFont}-Bold";
+        else if (_userConfig.IsItalicFont)
+            return $"{baseFont}-Oblique";
+        else
+            return baseFont;
+    }
+
+    // Why is Times Roman different from the rest?
+    private string GetTimesRomanFontName()
+    {
+        if (_userConfig.IsBoldFont && _userConfig.IsItalicFont)
+            return "Times-BoldItalic";
+        else if (_userConfig.IsBoldFont && !_userConfig.IsItalicFont)
+            return "Times-Bold";
+        else if (!_userConfig.IsBoldFont && _userConfig.IsItalicFont)
+            return "Times-Italic";
+        else
+            return "Times-Roman";
+    }
 }

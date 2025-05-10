@@ -14,7 +14,7 @@ public partial class App : Application
 
         // Services
         var userConfig = new UserConfig();
-        var fontService = new FontService();
+        var fontService = new FontService(userConfig);
         var pdfService = new PdfService(fontService, userConfig);
 
         // Logger
@@ -25,7 +25,7 @@ public partial class App : Application
         #endif
         Log.Information("-- Application started --");
 
-        var mainWindow = new MainWindow(pdfService);
+        var mainWindow = new MainWindow(pdfService, fontService);
         mainWindow.Show();
         
         /* WpfApp1.Properties.Settings.Default.IsFirstStartup = true;

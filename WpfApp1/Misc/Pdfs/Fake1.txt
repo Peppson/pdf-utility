@@ -1,5 +1,0 @@
-Bara pdfer?
-lösenordsskyddade?
-Metadata spelar det någon roll?
-vilka fonts? alla på systemet? eller enbart några? 
-Optimera pdf för web när vi ändå är igång?

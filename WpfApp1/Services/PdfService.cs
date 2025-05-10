@@ -24,10 +24,11 @@ public interface IPdfService
     void ResetAll();
 }
 
-public class PdfService(FontService fontService, UserConfig userConfig) : IPdfService
+public class PdfService(IFontService fontService, UserConfig userConfig) : IPdfService
 {
-    private readonly FontService _fontService = fontService;
     private readonly UserConfig _userConfig = userConfig;
+    private readonly IFontService _fontService = fontService;
+
     public static List<Pdf> LoadedPdfs { get; private set; } = new List<Pdf>(50);
     public static List<(int Pdf, int Page)> LowConfidencePages { get; private set; } = [];
     public int FileCount => LoadedPdfs.Count;
@@ -203,6 +204,8 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
 
     private void AddHeaderFooter(PdfDocument outputPdf, PdfDocument inputPdf, int[] pageRotations)
     {   
+        var font = _fontService.GetSelectedFont();
+        
         for (int i = 1; i <= outputPdf.GetNumberOfPages(); i++)
         {   
             var rotation = pageRotations[i - 1];
@@ -226,8 +229,8 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
             var canvas = new PdfCanvas(page);
             RotateCanvas(canvas, page.GetRotation(), rotatedWidth, rotatedHeight);
 
-            AddHeader(canvas, rotatedHeight, rotatedWidth);
-            AddFooter(canvas, rotatedHeight, rotatedWidth);
+            AddHeader(canvas, rotatedHeight, rotatedWidth, font);
+            AddFooter(canvas, rotatedHeight, rotatedWidth, font);
         }
     }
 
@@ -310,9 +313,10 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         page.RemoveAnnotation(annotation);
     }
 
-    private void AddHeader(PdfCanvas canvas, float height, float width)
+    private void AddHeader(PdfCanvas canvas, float height, float width, iText.Kernel.Font.PdfFont font)
     {
         if (!_userConfig.Header_Enabled) return;
+        
         var table = new Table(2, true);
 
         // Left text
@@ -322,11 +326,11 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
                 _userConfig.Header_LeftText :
                 $"{_userConfig.Header_LeftText} - {_userConfig.Header_LeftCount + _PDFCounter}";
 
-            table.AddCell(CreateCell(leftText, iText.Layout.Properties.TextAlignment.LEFT));
+            table.AddCell(CreateCell(leftText, iText.Layout.Properties.TextAlignment.LEFT, font));
         }
         else // Empty cell as spacer
         {
-            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.LEFT));
+            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.LEFT, font));
         }
 
         // Right text
@@ -336,19 +340,20 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
                 _userConfig.Header_RightText :
                 $"{_userConfig.Header_RightText} - {_userConfig.Header_RightCount + _PDFCounter}";
 
-            table.AddCell(CreateCell(rightText, iText.Layout.Properties.TextAlignment.RIGHT));
+            table.AddCell(CreateCell(rightText, iText.Layout.Properties.TextAlignment.RIGHT, font));
         }
         else
         {
-            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.RIGHT));
+            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.RIGHT, font));
         }
 
         WriteHeaderFooter(canvas, PositionType.Header, height, width, table);
     }
 
-    private void AddFooter(PdfCanvas canvas, float height, float width)
+    private void AddFooter(PdfCanvas canvas, float height, float width, iText.Kernel.Font.PdfFont font)
     {
         if (!_userConfig.Footer_Enabled) return;
+
         var table = new Table(2, true);
 
         // Left text
@@ -358,11 +363,11 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
                 _userConfig.Footer_LeftText :
                 $"{_userConfig.Footer_LeftText} - {_userConfig.Footer_LeftCount + _PDFCounter}";
 
-            table.AddCell(CreateCell(leftText, iText.Layout.Properties.TextAlignment.LEFT));
+            table.AddCell(CreateCell(leftText, iText.Layout.Properties.TextAlignment.LEFT, font));
         }
         else
         {
-            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.LEFT));
+            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.LEFT, font));
         }
 
         // Right text
@@ -372,11 +377,11 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
                 _userConfig.Footer_RightText :
                 $"{_userConfig.Footer_RightText} - {_userConfig.Footer_RightCount + _PDFCounter}";
 
-            table.AddCell(CreateCell(rightText, iText.Layout.Properties.TextAlignment.RIGHT));
+            table.AddCell(CreateCell(rightText, iText.Layout.Properties.TextAlignment.RIGHT, font));
         }
         else
         {
-            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.RIGHT));
+            table.AddCell(CreateCell("", iText.Layout.Properties.TextAlignment.RIGHT, font));
         }
 
         WriteHeaderFooter(canvas, PositionType.Footer, height, width, table);
@@ -449,10 +454,8 @@ public class PdfService(FontService fontService, UserConfig userConfig) : IPdfSe
         }
     }
 
-    private Cell CreateCell(string text, iText.Layout.Properties.TextAlignment alignment)
+    private Cell CreateCell(string text, iText.Layout.Properties.TextAlignment alignment, iText.Kernel.Font.PdfFont font)
     {   
-        var font = _fontService.GetFont(_userConfig.Font);
-        
         return new Cell()
             .Add(new Paragraph(text)
 

@@ -9,8 +9,10 @@ public class UserConfig
 
     public void Reset()
     {
-        Font = "TIMES-ROMAN";
+        SelectedFont = iText.IO.Font.Constants.StandardFonts.HELVETICA; // Default
         FontSize = 14;
+        IsBoldFont = false;
+        IsItalicFont = false;
         OnlyRotatePages = false;
         ProcessingDisabled = false;
 
@@ -35,8 +37,10 @@ public class UserConfig
         Log.Debug("UserConfig Reset()");
     }
 
-    public string Font { get; set; }
+    public string SelectedFont { get; set; }
     public int FontSize { get; set; }
+    public bool IsBoldFont { get; set; }
+    public bool IsItalicFont { get; set; }
     public bool OnlyRotatePages { get; set; }
     public bool ProcessingDisabled { get; set; }
 
